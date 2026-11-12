@@ -326,9 +326,11 @@ export function parseUserIntent(
 
   const explicitFollowUpRef =
     Boolean(prevContext?.resultIds.length) &&
-    (/\b(these|those|them|previous|above|current results?|same events?|from these|only online|only in[- ]person|filter those)\b/i.test(
+    (/\b(these|those|them|previous|above|current results?|same events?|from these|filter those|the ones?|ones|of them|narrow (?:it|them|down)|what about|how about)\b/i.test(
       lower,
     ) ||
+      /^(?:and |but |ok(?:ay)?,? )?(?:only|just)\b/i.test(lower) ||
+      /\bonly (?:the )?(?:online|in[- ]person|hybrid|free|virtual)\b/i.test(lower) ||
       /^(now\s+)?(compare|chart|graph|plot|sort|hide|show|group|display|make a|create a|turn (?:it|them|this)|build a dashboard|export|timeline|kanban|checklist)/i.test(
         lower,
       ));
