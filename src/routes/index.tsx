@@ -171,6 +171,13 @@ function ChatWorkspacePage() {
   const loadSession = useCallback(
     async (id: string) => {
       setErrorMsg(null);
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href);
+        if (url.searchParams.get("session") !== id) {
+          url.searchParams.set("session", id);
+          window.history.replaceState(window.history.state, "", url);
+        }
+      }
       if (user) {
         try {
           const [sessRes, msgRes] = await Promise.all([
