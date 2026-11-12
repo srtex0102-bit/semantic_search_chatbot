@@ -53,12 +53,12 @@ export function isMissingSchemaError(error: { code?: string | null; message?: st
   );
 }
 
-export function missingSchemaError(supabaseUrl?: string): HttpError {
-  const projectRef = supabaseUrl?.match(/https:\/\/([a-z0-9-]+)\.supabase\.co/i)?.[1];
-  const hint = projectRef
-    ? `Run drizzle/migrations/0000_workspace_core_schema.sql and drizzle/migrations/0001_seed_sample_events.sql in the Supabase SQL Editor (project ${projectRef}).`
-    : "Run drizzle/migrations/0000_workspace_core_schema.sql and drizzle/migrations/0001_seed_sample_events.sql in your Supabase SQL Editor.";
-  return new HttpError(503, "schema_not_initialized", `Supabase database schema is not initialized yet. ${hint}`);
+export function missingSchemaError(_supabaseUrl?: string): HttpError {
+  return new HttpError(
+    503,
+    "schema_not_initialized",
+    "Scout's event database isn't reachable right now. Refresh the page in a moment; if this keeps happening, the app may be connected to the wrong backend.",
+  );
 }
 
 export function getSupabasePublicConfig(): { url: string; publishableKey: string } {

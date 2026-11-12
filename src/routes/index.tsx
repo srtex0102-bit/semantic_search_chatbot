@@ -171,6 +171,13 @@ function ChatWorkspacePage() {
   const loadSession = useCallback(
     async (id: string) => {
       setErrorMsg(null);
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href);
+        if (url.searchParams.get("session") !== id) {
+          url.searchParams.set("session", id);
+          window.history.replaceState(window.history.state, "", url);
+        }
+      }
       if (user) {
         try {
           const [sessRes, msgRes] = await Promise.all([
@@ -273,6 +280,13 @@ function ChatWorkspacePage() {
 
   const startNewChat = useCallback(() => {
     abortRef.current?.abort();
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      if (url.searchParams.has("session")) {
+        url.searchParams.delete("session");
+        window.history.replaceState(window.history.state, "", url);
+      }
+    }
     setSessionId(null);
     setSessionSource(null);
     setSessionSaved(false);
@@ -389,6 +403,10 @@ function ChatWorkspacePage() {
           result.sessionId ?? (sessionSource === "local" ? sessionId : null) ?? crypto.randomUUID();
         setSessionId(resolvedSid);
         setSessionSource(user && result.sessionId ? "remote" : "local");
+        // Keep the open conversation in the address bar so a page refresh reopens it.
+        const url = new URL(window.location.href);
+        url.searchParams.set("session", resolvedSid);
+        window.history.replaceState(window.history.state, "", url);
 
         if (user && result.sessionId) {
           void queryClient.invalidateQueries({ queryKey: ["chat-sessions"] });
@@ -787,7 +805,7 @@ function ChatWorkspacePage() {
                           >
                             <ThumbsDown className="size-3" />
                           </Button>
-                          {idx === messages.length - 1 && (
+                          {idx === messages.length - 1 && !msg.streaming && !loadingStage && (
                             <Button
                               type="button"
                               size="sm"

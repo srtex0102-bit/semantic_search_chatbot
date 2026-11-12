@@ -62,5 +62,40 @@ describe("natural language intent parser", () => {
     const form = parseUserIntent("Create a form to filter events");
     expect(form.intent).toBe("generate_form");
   });
-});
 
+  it("keeps earlier technology and date filters when the user says 'only the online ones'", () => {
+    const prev: ConversationContext = {
+      query: "Find React events in December",
+      searchText: "Find React events in December",
+      filters: {
+        ...EMPTY_FILTERS,
+        technologies: ["React"],
+        dateStart: "2026-12-01",
+        dateEnd: "2026-12-31",
+      },
+      resultIds: ["11111111-1111-4111-8111-111111111111"],
+      intent: "search_events",
+      at: NOV_2026.toISOString(),
+    };
+    const parsed = parseUserIntent("only the online ones", prev, NOV_2026);
+    expect(parsed.isFollowUp).toBe(true);
+    expect(parsed.filters.formats).toEqual(["online"]);
+    expect(parsed.filters.technologies).toEqual(["React"]);
+    expect(parsed.filters.dateStart).toBe("2026-12-01");
+    expect(parsed.filters.dateEnd).toBe("2026-12-31");
+  });
+
+  it("starts a fresh search for an unrelated new query", () => {
+    const prev: ConversationContext = {
+      query: "Find React events",
+      searchText: "Find React events",
+      filters: { ...EMPTY_FILTERS, technologies: ["React"] },
+      resultIds: ["11111111-1111-4111-8111-111111111111"],
+      intent: "search_events",
+      at: NOV_2026.toISOString(),
+    };
+    const parsed = parseUserIntent("Find Python workshops in January", prev, NOV_2026);
+    expect(parsed.isFollowUp).toBe(false);
+    expect(parsed.filters.technologies).not.toContain("React");
+  });
+});
