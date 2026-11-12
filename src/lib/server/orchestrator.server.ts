@@ -372,8 +372,14 @@ async function persistTurn(
       const parts: unknown[] = [{ type: "text", text: answer }];
       if (uiSpec) parts.push({ type: "ui_response", spec: uiSpec });
       parts.push({ type: "meta", ...meta });
-      await input.auth.client.from("chat_messages").insert([
+      // PostgREST bulk inserts require identical keys on every row, and both rows
+      // would otherwise share one now() timestamp, making history order ambiguous.
+      const userAt = new Date();
+      const assistantAt = new Date(userAt.getTime() + 1);
+      const { error: insertError } = await input.auth.client.from("chat_messages").insert([
         {
+          id: crypto.randomUUID(),
+          created_at: userAt.toISOString(),
           session_id: persistedSessionId,
           role: "user",
           content: cleanMessage,
@@ -382,6 +388,7 @@ async function persistTurn(
         },
         {
           id: assistantMessageId,
+          created_at: assistantAt.toISOString(),
           session_id: persistedSessionId,
           role: "assistant",
           content: answer,
@@ -389,6 +396,7 @@ async function persistTurn(
           context: JSON.parse(JSON.stringify(context)),
         },
       ]);
+      if (insertError) throw new Error(insertError.message);
       await input.auth.client
         .from("chat_sessions")
         .update({ updated_at: new Date().toISOString() })

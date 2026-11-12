@@ -332,8 +332,12 @@ async function persistBrowserTurn(
     ];
     if (uiSpec) parts.push({ type: "ui_response", spec: uiSpec });
     parts.push({ type: "meta", modelUsed });
+    const userAt = new Date();
+    const assistantAt = new Date(userAt.getTime() + 1);
     const inserted = await supabase.from("chat_messages").insert([
       {
+        id: crypto.randomUUID(),
+        created_at: userAt.toISOString(),
         session_id: targetSessionId,
         role: "user",
         content: input.message.trim(),
@@ -342,6 +346,7 @@ async function persistBrowserTurn(
       },
       {
         id: messageId,
+        created_at: assistantAt.toISOString(),
         session_id: targetSessionId,
         role: "assistant",
         content: answer,
